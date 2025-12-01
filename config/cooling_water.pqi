@@ -19,13 +19,6 @@ EQUILIBRIUM_PHASES 1
     O2(g)    {{ o2_log }}
 END
 
-USE SOLUTION 1
-USE EQUILIBRIUM_PHASES 1
-INCREMENTAL_REACTION true
-REACTION
-   H2O    -1
-   {{evaporation_moles}} moles in 100 steps
-END
 SELECTED_OUTPUT
     -reset false
     -high_precision true
@@ -44,4 +37,12 @@ SELECTED_OUTPUT
         Hydroxyapatite
         Fe(OH)3(a)
         Talc
+END
+
+USE SOLUTION 1
+USE EQUILIBRIUM_PHASES 1
+INCREMENTAL_REACTION true
+REACTION
+   H2O    -1
+   {{evaporation_moles}} moles in 100 steps
 END

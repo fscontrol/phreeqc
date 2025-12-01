@@ -10,5 +10,6 @@ dependencies = [
     "jinja2",
     "fastapi",
     "shiny",
-    "plotly"
+    "plotly",
+    "shinywidgets"
 ]
