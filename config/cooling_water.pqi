@@ -1,0 +1,47 @@
+SOLUTION 1 #Makeup water
+    units ppm
+    pH    {{ pH }}
+    temp  {{ temp }}
+    Ca    {{ ca_ppm }}
+    Mg    {{ mg_ppm }}
+    Na    {{ na_ppm }}
+    Cl    {{ cl_ppm }}
+    S(6)  {{ s_ppm }}
+    Alkalinity   {{ alk_as_hco3_ppm }} as HCO3
+    Fe    {{ fe_ppm }}
+    Si    {{ si_ppm }}
+    P     {{ p_ppm }}
+SAVE SOLUTION 1
+END
+
+EQUILIBRIUM_PHASES 1
+    CO2(g)   {{ co_2_log }}
+    O2(g)    {{ o2_log }}
+END
+
+USE SOLUTION 1
+USE EQUILIBRIUM_PHASES 1
+INCREMENTAL_REACTION true
+REACTION
+   H2O    -1
+   {{evaporation_moles}} moles in 100 steps
+END
+SELECTED_OUTPUT
+    -reset false
+    -high_precision true
+    -simulation true
+    -step true
+    -pH true
+    -temp true
+    -totals Ca Mg Na Cl S(6) Si P Fe
+    -saturation_indices
+        Calcite
+        Dolomite
+        Gypsum
+        Anhydrite
+        SiO2(a)
+        Chalcedony
+        Hydroxyapatite
+        Fe(OH)3(a)
+        Talc
+END

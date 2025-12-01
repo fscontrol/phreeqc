@@ -1,0 +1,6 @@
+{
+    "phreeqc": {
+        "dll_path": "/usr/local/lib/libiphreeqc.so",
+        "db_path": "/usr/local/share/phreeqc/phreeqc.dat"
+    }
+}
