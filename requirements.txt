@@ -1,0 +1,7 @@
+pandas 
+phreeqpy
+jinja2
+fastapi
+shiny
+plotly
+shinywidgets

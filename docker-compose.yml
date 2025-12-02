@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   phreeqc-app:
     build: .
@@ -6,5 +5,5 @@ services:
     ports:
       - "6999:8000" 
     volumes:
-      - ./config:/app/config:ro
+      - ./:/app/
     restart: unless-stopped

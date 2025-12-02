@@ -1,34 +1,32 @@
+FROM python:3.13-slim AS builder-c
+WORKDIR /opt/iphreeqc
+RUN apt-get update 
+RUN apt-get install -y --no-install-recommends build-essential wget ca-certificates
+RUN rm -rf /var/lib/apt/lists/*
+RUN wget https://water.usgs.gov/water-resources/software/PHREEQC/iphreeqc-3.8.6-17100.tar.gz -O iphreeqc.tar.gz
+RUN tar -xzf iphreeqc.tar.gz
+WORKDIR /opt/iphreeqc/iphreeqc-3.8.6-17100
+RUN mkdir build 
+WORKDIR /opt/iphreeqc/iphreeqc-3.8.6-17100/build
+RUN ../configure --prefix=/usr/local
+RUN make -j4 && make install
+RUN mkdir -p /usr/local/share/phreeqc
+RUN cp ../database/phreeqc.dat /usr/local/share/phreeqc/phreeqc.dat
+
 FROM python:3.13-slim
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
-WORKDIR /opt
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        wget \
-        ca-certificates && \
-    mkdir -p /opt/iphreeqc && \
-    cd /opt/iphreeqc && \
-    wget https://water.usgs.gov/water-resources/software/PHREEQC/iphreeqc-3.8.6-17100.tar.gz -O iphreeqc.tar.gz && \
-    tar -xzf iphreeqc.tar.gz && \
-    cd iphreeqc-3.8.6-17100 && \
-    mkdir build && cd build && \
-    ../configure --prefix=/usr/local && \
-    make -j4 && \
-    make install && \
-    mkdir -p /usr/local/share/phreeqc && \
-    cp ../database/phreeqc.dat /usr/local/share/phreeqc/phreeqc.dat && \
-    ldconfig && \
-    cd / && rm -rf /opt/iphreeqc && \
-    apt-get remove -y build-essential wget && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-ENV UV_PROJECT_ENVIRONMENT="/opt/venv"
-COPY pyproject.toml .
-RUN uv sync --frozen --no-install-project || uv pip install -r pyproject.toml --system
+RUN apt-get update 
+RUN apt-get install -y --no-install-recommends build-essential ca-certificates
+COPY --from=builder-c /usr/local/lib/libiphreeqc* /usr/local/lib/
+COPY --from=builder-c /usr/local/include/ /usr/local/include/
+COPY --from=builder-c /usr/local/share/phreeqc /usr/local/share/phreeqc
+RUN ldconfig
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get purge -y build-essential 
+RUN apt-get autoremove -y 
+RUN rm -rf /var/lib/apt/lists/*
 COPY . /app
-ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
-CMD ["uv", "run", "main.py"]
+CMD ["python", "main.py"]

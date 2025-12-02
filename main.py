@@ -9,6 +9,7 @@ from lib.run_string import run_phreeqc_simulation
 
 TEMPLATE_PATH = Path(__file__).parent / "config" / "cooling_water.pqi"
 
+
 app_ui = ui.page_fluid(
     ui.layout_sidebar(
         ui.sidebar(
@@ -17,32 +18,52 @@ app_ui = ui.page_fluid(
             ui.layout_columns(
                 ui.input_numeric("pH", "pH", 8.2),
                 ui.input_numeric("temp", "Temperature, °C", 30),
+
                 ui.input_numeric("ca_caco3_ppm", "Ca, as CaCO3, ppm", 70),
                 ui.input_numeric("mg_caco3_ppm", "Mg, as CaCO3, ppm", 20),
+
                 ui.input_numeric("na_ppm", "Na, ppm", 80),
                 ui.input_numeric("cl_ppm", "Cl, ppm", 140),
+
                 ui.input_numeric("so4_ppm", "SO₄, ppm", 90),
                 ui.input_numeric("alk_as_caco3_ppm", "Alkalinity as CaCO3, ppm", 120),
+
                 ui.input_numeric("fe_ppm", "Fe, ppm", 0.05),
                 ui.input_numeric("sio2_ppm", "SiO₂, ppm", 5),
+
                 ui.input_numeric("po4_ppm", "PO₄, ppm", 1.5),
                 ui.input_numeric("co2_log", "log pCO₂(g)", -3.5),
-                ui.input_numeric("o2_log", "log pO₂(g)", -0.68),
-            ),
-            ui.input_numeric("cycles", "Cycles (concentration factor)", 7, min=1, step=0.5),
-            ui.hr(),
 
-            ui.input_action_button("run", "Run simulation", class_="btn-primary"),
-            width=4,
+                ui.input_numeric("o2_log", "log pO₂(g)", -0.68),
+
+                col_widths=(6, 6),   # по два поля в строке
+                class_="mb-3",
+            ),
+
+            ui.input_numeric(
+                "cycles",
+                "Cycles (concentration factor)",
+                7,
+                min=1,
+                step=0.5,
+                class_="mb-3",
+            ),
+
+            ui.hr(),
+            ui.input_action_button("run", "Run simulation", class_="btn btn-primary"),
+
+            width="320px",          # фиксированная ширина
+            open="always",          # всегда открыт
+            class_="bg-light",      # легкий серый фон
         ),
 
-        ui.layout_column_wrap(
+        ui.layout_columns(
             ui.card(
                 ui.card_header("Plot"),
                 ui.output_ui("y_selector"),
-                output_widget("plot")
+                output_widget("plot"),
             ),
-            width=14
+            col_widths={"lg": (9,), "md": (12,)},  # на десктопе график поуже
         ),
     )
 )
@@ -66,7 +87,7 @@ def server(input, output, session):
             "pH": input.pH(),
             "temp": input.temp(),
 
-            # из CaCO3 → ион
+            # из CaCO3 → катион
             # Ca as CaCO3: экв. вес 50, Ca экв. вес 20 → множитель 20/50
             "ca_ppm": input.ca_caco3_ppm() / 50 * 20,
             # Mg as CaCO3: примерно экв. вес ~12 → множитель 12/50
@@ -103,14 +124,18 @@ def server(input, output, session):
         df = result_df()
         if df.empty:
             return ui.p("Run simulation to select variable")
+
         numeric_cols = df.select_dtypes(include="number").columns.tolist()
         allowed_cols = [
             col for col in numeric_cols
             if col == "pH" or col.lower().startswith("si_")
         ]
+
         if not allowed_cols:
             return ui.p("No pH or saturation indices found in SELECTED_OUTPUT")
+
         default = "pH" if "pH" in allowed_cols else allowed_cols[0]
+
         return ui.input_select(
             "ycol",
             "Y-axis variable",
@@ -144,31 +169,62 @@ def server(input, output, session):
             fig.update_yaxes(visible=False)
             return fig
 
-        # Ось X: step, если есть, иначе simulation, иначе индекс
+        # Ось X: cycles, если есть step; иначе — просто индекс
         if "step" in df.columns:
             cycles = input.cycles()
             evaporation_moles = 55.555 - 55.555 / cycles
-            df["evap"] = df["step"] * evaporation_moles/df["step"].max()
-            df["cycles"] = 55.555/(55.555 - df["evap"])
+            df["evap"] = df["step"] * evaporation_moles / df["step"].max()
+            df["cycles"] = 55.555 / (55.555 - df["evap"])
             x = df["cycles"]
             xlabel = "Cycles"
+        else:
+            x = df.index
+            xlabel = "Step"
 
         ycol_input = getattr(input, "ycol", None)
         if ycol_input is None:
-            yname = "pH" if "pH" in df.columns else df.select_dtypes(include="number").columns[0]
+            if "pH" in df.columns:
+                yname = "pH"
+            else:
+                yname = df.select_dtypes(include="number").columns[0]
         else:
             yname = ycol_input()
 
         y = df[yname]
 
         fig = go.Figure()
-        fig.add_scatter(x=x, y=y, mode="lines+markers", name=yname)
+        fig.add_scatter(
+            x=x,
+            y=y,
+            mode="lines+markers",
+            name=yname,
+        )
+
+        fig.update_traces(
+            marker=dict(size=7),
+            line=dict(width=2),
+        )
+
         fig.update_layout(
-            height=600,
-            xaxis_title=xlabel,
-            yaxis_title=yname,
+            height=500,
             template="seaborn",
-            margin=dict(l=40, r=20, t=40, b=40),
+            margin=dict(l=60, r=30, t=60, b=60),
+            xaxis=dict(
+                title=xlabel,
+                title_font=dict(size=16),
+                tickfont=dict(size=12),
+                zeroline=False,
+                showgrid=True,
+            ),
+            yaxis=dict(
+                title=yname,
+                title_font=dict(size=16),
+                tickfont=dict(size=12),
+                zeroline=False,
+                showgrid=True,
+            ),
+            font=dict(size=13),
+            hovermode="x unified",
         )
 
         return fig
