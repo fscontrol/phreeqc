@@ -10,7 +10,6 @@ settings = config["phreeqc"]
 def run_phreeqc_simulation(template_path: Path, context: dict) -> pd.DataFrame:
     template = Template(template_path.read_text())
     input_string = template.render(**context)
-    print(input_string)
     phreeqc = pm.IPhreeqc(dll_path=settings["dll_path"])
     phreeqc.load_database(settings["db_path"])
     err = phreeqc.get_error_string()
@@ -24,7 +23,6 @@ def run_phreeqc_simulation(template_path: Path, context: dict) -> pd.DataFrame:
         raise RuntimeError(f"Ошибка при run_string:\n{err2}")
 
     out = phreeqc.get_selected_output_array()
-    print(out)
 
     # out[0] — заголовки, остальные строки — данные
     df = pd.DataFrame(out[1:], columns=out[0])

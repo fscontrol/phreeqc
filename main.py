@@ -9,12 +9,29 @@ from lib.run_string import run_phreeqc_simulation
 
 TEMPLATE_PATH = Path(__file__).parent / "config" / "cooling_water.pqi"
 
-
 app_ui = ui.page_fluid(
     ui.layout_sidebar(
         ui.sidebar(
             ui.h4("Makeup water input"),
+
+            # 🔹 СЮДА ПЕРЕНЁС КНОПКУ — САМЫЙ ВЕРХ САЙДБАРА
+            ui.input_action_button(
+                "run",
+                "▶ Run simulation",      # можно поменять на "▶ Рассчитать"
+                class_="btn btn-success btn-lg w-100 mb-3"
+            ),
+
+            # cycles сразу под кнопкой, чтоб логически рядом
+            ui.input_numeric(
+                "cycles",
+                "Cycles (concentration factor)",
+                7,
+                min=1,
+                step=0.5,
+            ),
+
             ui.hr(),
+
             ui.layout_columns(
                 ui.input_numeric("pH", "pH", 8.2),
                 ui.input_numeric("temp", "Temperature, °C", 30),
@@ -36,25 +53,12 @@ app_ui = ui.page_fluid(
 
                 ui.input_numeric("o2_log", "log pO₂(g)", -0.68),
 
-                col_widths=(6, 6),   # по два поля в строке
-                class_="mb-3",
+                col_widths=(6, 6),
             ),
 
-            ui.input_numeric(
-                "cycles",
-                "Cycles (concentration factor)",
-                7,
-                min=1,
-                step=0.5,
-                class_="mb-3",
-            ),
-
-            ui.hr(),
-            ui.input_action_button("run", "Run simulation", class_="btn btn-primary"),
-
-            width="320px",          # фиксированная ширина
-            open="always",          # всегда открыт
-            class_="bg-light",      # легкий серый фон
+            width="320px",
+            open="always",
+            class_="bg-light",
         ),
 
         ui.layout_columns(
@@ -63,10 +67,11 @@ app_ui = ui.page_fluid(
                 ui.output_ui("y_selector"),
                 output_widget("plot"),
             ),
-            col_widths={"lg": (9,), "md": (12,)},  # на десктопе график поуже
+            col_widths={"lg": (9,), "md": (12,)},
         ),
     )
 )
+
 
 
 def server(input, output, session):
@@ -206,7 +211,7 @@ def server(input, output, session):
         )
 
         fig.update_layout(
-            height=500,
+            height=700,
             template="seaborn",
             margin=dict(l=60, r=30, t=60, b=60),
             xaxis=dict(
