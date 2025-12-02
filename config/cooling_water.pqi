@@ -29,14 +29,12 @@ SELECTED_OUTPUT
     -totals Ca Mg Na Cl S(6) Si P Fe
     -saturation_indices
         Calcite
-        Dolomite
+        Dolomite(disordered)
         Gypsum
-        Anhydrite
-        SiO2(a)
-        Chalcedony
-        Hydroxyapatite
-        Fe(OH)3(a)
-        Talc
+        SiO2(am-ppt)
+        Ca4H(PO4)3:3H2O
+        Ferrihydrite
+        Strengite      # FePO4·2H2O, Fe(III)-фосфат
 END
 
 USE SOLUTION 1
